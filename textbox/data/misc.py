@@ -19,6 +19,7 @@ def load_data(dataset_path: str, max_length: int = 0):
         raise ValueError('File {} not exist'.format(os.path.abspath(dataset_path)))
 
     text = []
+    source = []
     with open(dataset_path, "r") as fin:
         if max_length:
             fin = itertools.islice(fin, max_length)
@@ -32,8 +33,13 @@ def load_data(dataset_path: str, max_length: int = 0):
                         l = str(l)
                 except:
                     pass
+            s = ""
+            sp = l.split(";;;")
+            if len(sp) > 1:
+                s = sp[-1]
             text.append(l)
-    return text
+            source.append(s)
+    return text, s
 
 
 def _pad_sequence(tensors: List[torch.Tensor], padding_value: int, padding_side: str = 'right'):

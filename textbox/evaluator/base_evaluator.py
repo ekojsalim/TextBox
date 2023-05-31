@@ -129,8 +129,28 @@ class BaseEvaluator():
             if metric != 'hm':
                 self.evaluators.append(evaluator)
 
-    def _process_corpus(self, generate_corpus, reference_dataset):
+    def _process_corpus(self, generate_corpus, reference_dataset, grouped=True):
         reference_corpus = reference_dataset.target_text
+        if grouped:
+            rc = []
+            gc = []
+            r = ""
+            g = ""
+            rs = ""
+            for ref, refsource, gen in zip(reference_corpus, reference_dataset.target_source, generate_corpus):
+                if refsource != rs and (r and g):
+                    rc.append(r)
+                    gc.append(g)
+                    r = ""
+                    g = ""
+                    rs =""
+                if refsource == rs and rs != "":
+                    r += ref
+                    g += gen
+            rc.append(r)
+            gc.append(g)
+            reference_corpus = rc
+            generate_corpus = gc
         for i, refs in enumerate(reference_corpus):
             if isinstance(refs, str):
                 reference_corpus[i] = [refs]
@@ -139,7 +159,7 @@ class BaseEvaluator():
         reference_corpus = Corpus(reference_corpus, self.lower, 'ref', tokenizer, self.remove_punc)
         return generate_corpus, reference_corpus
 
-    def evaluate(self, generate_corpus, reference_dataset, avg=True):
+    def evaluate(self, generate_corpus, reference_dataset, avg=True, grouped=False):
         r"""get metrics result
 
         Args:
@@ -150,7 +170,7 @@ class BaseEvaluator():
         Returns:
             dict: such as ``{'bleu-1': xxx, 'bleu-2': yyy}``
         """
-        generate_corpus, reference_corpus = self._process_corpus(generate_corpus, reference_dataset)
+        generate_corpus, reference_corpus = self._process_corpus(generate_corpus, reference_dataset, grouped)
 
         result_dict = {}
         for evaluator in self.evaluators:

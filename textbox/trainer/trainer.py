@@ -1,7 +1,7 @@
 import collections
 import os
 from accelerate.logging import get_logger
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Tuple
 import math
 
 import torch
@@ -481,7 +481,7 @@ class Trainer(AbstractTrainer):
         eval_data: DataLoader,
         load_best_model: bool = True,
         is_valid: bool = False,
-    ) -> Optional[dict]:
+    ) -> tuple[dict, dict]:
         r"""Evaluate the model based on the `eval_data`.
 
         Args:
@@ -567,5 +567,8 @@ class Trainer(AbstractTrainer):
             self.save_generated_text(generate_corpus, is_valid)
 
         result = self.evaluator.evaluate(generate_corpus, reference_dataset)
+        result_grouped = result
+        if self.config["do_test_grouped"]:
+            result_grouped = None
 
-        return result
+        return result, result_grouped

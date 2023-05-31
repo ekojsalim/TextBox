@@ -97,6 +97,7 @@ class Experiment:
         self.do_train = config['do_train']
         self.do_valid = config['do_valid']
         self.do_test = config['do_test']
+        self.do_test_grouped = config["do_test_grouped"]
         self.valid_result: Optional[ResultType] = None
         self.test_result: Optional[ResultType] = None
         if config['load_type'] == 'resume':
@@ -116,11 +117,16 @@ class Experiment:
 
     def _do_test(self):
         if self.do_test:
+            self.test_result, self.test_result_grouped = self.trainer.evaluate(self.test_data, load_best_model=self.do_train)
             with self.summary_tracker.new_epoch('eval'):
-                self.test_result = self.trainer.evaluate(self.test_data, load_best_model=self.do_train)
                 self.summary_tracker.set_metrics_results(self.test_result)
                 self.logger.info(
                     'Evaluation result:\n{}'.format(self.summary_tracker._current_epoch.as_str(sep=",\n", indent=" "))
+                )
+            with self.summary_tracker.new_epoch('evalgrouped'):
+                self.summary_tracker.set_metrics_results(self.test_result_grouped)
+                self.logger.info(
+                    'Grouped Evaluation result:\n{}'.format(self.summary_tracker._current_epoch.as_str(sep=",\n", indent=" "))
                 )
 
     def _on_experiment_end(self):
